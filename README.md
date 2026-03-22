@@ -56,7 +56,7 @@ Open the **Notion AI Content Studio Hub** in your workspace. You’ll find:
 
 1. Install dependencies: `npm install`
 2. Start the dev server: `npm run dev`
-3. Configure environment variables (for example in `.env.local`): Notion OAuth credentials for **Connect Notion**, or `NOTION_TOKEN` for a single-workspace integration without OAuth. Optional: `OLLAMA_HOST`, `OLLAMA_MODEL`.
+3. Configure environment variables (for example in `.env.local`): Notion OAuth credentials for **Connect Notion**, or `NOTION_TOKEN` for an **internal** integration without OAuth. If you use `NOTION_TOKEN`, Notion does not allow creating a page at the **workspace root** — create any page in Notion, connect your integration to it (**⋯ → Connections**), copy its ID from the URL, and set **`NOTION_PARENT_PAGE_ID`** (see `.env.example`). Optional: `OLLAMA_HOST`, `OLLAMA_MODEL`.
 
 Restart the server after changing configuration.
 

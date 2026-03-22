@@ -1,13 +1,14 @@
 import { cookies } from "next/headers";
 
 /**
- * Access token: user OAuth session (httpOnly cookie) or server NOTION_TOKEN (internal integration / dev).
+ * Access token: `NOTION_TOKEN` (internal integration) when set, else OAuth cookie.
+ * Env wins so a valid integration token isn’t overridden by an old or invalid browser session.
  */
 export async function getNotionAccessToken(): Promise<string | null> {
+  const fromEnv = process.env.NOTION_TOKEN?.trim();
+  if (fromEnv) return fromEnv;
   const store = await cookies();
-  const fromCookie = store.get("notion_access_token")?.value;
-  if (fromCookie) return fromCookie;
-  return process.env.NOTION_TOKEN?.trim() || null;
+  return store.get("notion_access_token")?.value ?? null;
 }
 
 export function isOAuthConfigured(): boolean {

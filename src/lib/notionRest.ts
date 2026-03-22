@@ -47,7 +47,34 @@ export async function findHubPageId(client: Client): Promise<string | null> {
   return null;
 }
 
+/** Internal integration tokens cannot use `parent: { workspace: true }`; set NOTION_PARENT_PAGE_ID. */
+function usingInternalIntegrationToken(): boolean {
+  return Boolean(process.env.NOTION_TOKEN?.trim());
+}
+
+/**
+ * Create the hub page. Internal integrations must set `NOTION_PARENT_PAGE_ID` to a page you’ve
+ * shared with the integration (Notion → page → … → Connections). OAuth users can omit it to
+ * create at workspace root when Notion allows.
+ */
 export async function createHubPage(client: Client): Promise<string> {
+  const parentPageId = process.env.NOTION_PARENT_PAGE_ID?.trim();
+  if (parentPageId) {
+    const res = await client.pages.create({
+      parent: { type: "page_id", page_id: parentPageId },
+      properties: {
+        title: { title: rt(HUB_TITLE) },
+      },
+    });
+    return res.id;
+  }
+
+  if (usingInternalIntegrationToken()) {
+    throw new Error(
+      "Internal integrations can’t create a page at the workspace root. In Notion, create any page (or pick an existing one), add your integration under … → Connections, copy the page ID from the URL, and set NOTION_PARENT_PAGE_ID in .env.local. Restart the server and run setup again."
+    );
+  }
+
   const res = await client.pages.create({
     parent: { workspace: true },
     properties: {
