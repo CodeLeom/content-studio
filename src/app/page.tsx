@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const SIGNUP_URL = "https://www.notion.so/signup";
-const HELP_URL = "https://www.notion.so/help/guides/get-started-with-notion";
+const HELP_URL = "https://www.notion.com/personal";
 
 function IconCalendar() {
   return (
