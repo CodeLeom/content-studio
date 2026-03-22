@@ -35,6 +35,33 @@ function toneChecksFromDefaults(): Record<string, boolean> {
   return Object.fromEntries(TONE_OPTIONS.map((t) => [t, defaults.has(t)]));
 }
 
+const ACTION_LABELS: Record<"setup" | "calendar" | "pipeline" | "run-all", string> = {
+  setup: "1. Setup Notion",
+  calendar: "2. Generate calendar",
+  pipeline: "3. Run pipeline",
+  "run-all": "Run everything — setup, calendar & pipeline",
+};
+
+/** User-facing status while the server + Ollama work (can take minutes). */
+const LOADING_STATUS: Record<"setup" | "calendar" | "pipeline" | "run-all", { title: string; detail: string }> = {
+  setup: {
+    title: "Setting up Notion…",
+    detail: "Creating or updating your hub, creator profile, and content pipeline. Usually quick.",
+  },
+  calendar: {
+    title: "Generating your calendar…",
+    detail: "Ollama is proposing titles for the week. May take 30 seconds to a few minutes.",
+  },
+  pipeline: {
+    title: "Running the content pipeline…",
+    detail: "Writing hooks, scripts, and repurposed posts per row. Large batches take longer.",
+  },
+  "run-all": {
+    title: "Running the full workflow…",
+    detail: "Setup, calendar (if needed), then scripts — stay on this page. Can take several minutes.",
+  },
+};
+
 function StudioContent() {
   const searchParams = useSearchParams();
   const [notionReady, setNotionReady] = useState<boolean | null>(null);
@@ -45,7 +72,7 @@ function StudioContent() {
   const [useRecommendedTones, setUseRecommendedTones] = useState(true);
   const [toneChecks, setToneChecks] = useState(emptyToneChecks);
   const [logs, setLogs] = useState<string[]>([]);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState<"setup" | "calendar" | "pipeline" | "run-all" | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [force, setForce] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -155,7 +182,7 @@ function StudioContent() {
   };
 
   return (
-    <main>
+    <main aria-busy={loading ? true : undefined}>
       <nav className="studio-nav">
         <Link href="/">← Home</Link>
         <button type="button" className="linkish" onClick={() => void logout()}>
@@ -185,7 +212,7 @@ function StudioContent() {
         </div>
       )}
 
-      <div className="card studio-profile-card">
+      <div className={`card studio-profile-card${loading ? " studio-section-busy" : ""}`}>
         <fieldset className="studio-fieldset">
           <legend className="studio-legend">Platforms</legend>
           <p className="studio-hint">Choose every channel where you publish (you can pick more than one).</p>
@@ -299,16 +326,35 @@ function StudioContent() {
           Uses Ollama locally (e.g. <code>ollama pull llama3.1</code>). Default model: <code>llama3.1</code>.
         </p>
         <label className="studio-checkbox-row">
-          <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
+          <input type="checkbox" checked={force} disabled={!!loading} onChange={(e) => setForce(e.target.checked)} />
           <span>Force regenerate scripts (ignore existing script text)</span>
         </label>
+        {loading ? (
+          <div className="studio-progress" role="status" aria-live="polite" aria-busy="true">
+            <div className="studio-progress-row">
+              <span className="studio-spinner" aria-hidden />
+              <div>
+                <p className="studio-progress-title">{LOADING_STATUS[loading].title}</p>
+                <p className="studio-progress-detail">{LOADING_STATUS[loading].detail}</p>
+              </div>
+            </div>
+            <p className="studio-progress-hint">Log output will appear below when this step finishes.</p>
+          </div>
+        ) : null}
         <button
           type="button"
-          className="studio-run-primary"
+          className={`studio-run-primary${loading === "run-all" ? " studio-run-primary-loading" : ""}`}
           disabled={!!loading || notionReady !== true}
           onClick={() => callApi("run-all")}
         >
-          {loading === "run-all" ? "…" : "Run everything — setup, calendar & pipeline"}
+          {loading === "run-all" ? (
+            <>
+              <span className="studio-btn-spinner" aria-hidden />
+              Working…
+            </>
+          ) : (
+            ACTION_LABELS["run-all"]
+          )}
         </button>
         <details className="studio-advanced">
           <summary>Individual steps</summary>
@@ -316,26 +362,52 @@ function StudioContent() {
             Use these if you only need to re-run one part (e.g. regenerate the calendar without touching scripts).
           </p>
           <div className="row">
-            <button type="button" disabled={!!loading || notionReady !== true} onClick={() => callApi("setup")}>
-              {loading === "setup" ? "…" : "1. Setup Notion"}
+            <button
+              type="button"
+              className={loading === "setup" ? "studio-btn-loading" : undefined}
+              disabled={!!loading || notionReady !== true}
+              onClick={() => callApi("setup")}
+            >
+              {loading === "setup" ? (
+                <>
+                  <span className="studio-btn-spinner" aria-hidden />
+                  Working…
+                </>
+              ) : (
+                ACTION_LABELS.setup
+              )}
             </button>
             <button
               type="button"
-              className="secondary"
+              className={`secondary${loading === "calendar" ? " studio-btn-loading" : ""}`}
               disabled={!!loading || notionReady !== true}
               onClick={() => callApi("calendar")}
             >
-              {loading === "calendar" ? "…" : "2. Generate calendar"}
+              {loading === "calendar" ? (
+                <>
+                  <span className="studio-btn-spinner" aria-hidden />
+                  Working…
+                </>
+              ) : (
+                ACTION_LABELS.calendar
+              )}
             </button>
           </div>
           <div className="row">
             <button
               type="button"
-              className="secondary"
+              className={`secondary${loading === "pipeline" ? " studio-btn-loading" : ""}`}
               disabled={!!loading || notionReady !== true}
               onClick={() => callApi("pipeline")}
             >
-              {loading === "pipeline" ? "…" : "3. Run pipeline"}
+              {loading === "pipeline" ? (
+                <>
+                  <span className="studio-btn-spinner" aria-hidden />
+                  Working…
+                </>
+              ) : (
+                ACTION_LABELS.pipeline
+              )}
             </button>
           </div>
         </details>
@@ -362,7 +434,13 @@ function StudioContent() {
 
 export default function StudioPage() {
   return (
-    <Suspense fallback={<main className="studio-loading"><p className="lead">Loading…</p></main>}>
+    <Suspense
+      fallback={
+        <main className="studio-loading">
+          <p className="lead">Loading studio…</p>
+        </main>
+      }
+    >
       <StudioContent />
     </Suspense>
   );

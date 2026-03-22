@@ -214,6 +214,10 @@ select.studio-select {
   padding: 0.65rem 1rem;
   font-size: 0.95rem;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .studio-advanced {
@@ -257,6 +261,93 @@ select.studio-select {
 
 .studio-advanced .row:first-of-type {
   margin-top: 0;
+}
+
+.studio-section-busy {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.studio-progress {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 156, 255, 0.35);
+  background: rgba(124, 156, 255, 0.08);
+}
+
+.studio-progress-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.studio-spinner {
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.15rem;
+  border: 2px solid rgba(124, 156, 255, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: studio-spin 0.75s linear infinite;
+}
+
+@keyframes studio-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.studio-progress-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.studio-progress-detail {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.studio-progress-hint {
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.studio-btn-spinner {
+  display: inline-block;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-right: 0.45rem;
+  vertical-align: -0.15em;
+  border: 2px solid rgba(15, 13, 20, 0.2);
+  border-top-color: rgba(15, 13, 20, 0.85);
+  border-radius: 50%;
+  animation: studio-spin 0.75s linear infinite;
+}
+
+button.secondary .studio-btn-spinner {
+  border-color: rgba(232, 234, 237, 0.2);
+  border-top-color: var(--text);
+}
+
+button.studio-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.studio-run-primary-loading {
+  cursor: wait;
 }
 
 textarea {
