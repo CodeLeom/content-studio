@@ -119,12 +119,6 @@ export default function LandingPage() {
             <p className="cta-note">
               We’ll open Notion in a new window. When you’re done, return here and tap <strong>Connect Notion</strong>.
             </p>
-            {!oauthOk && (
-              <p className="cta-dev">
-                <span className="cta-dev-label">Developer</span> Add OAuth env vars or use <code>NOTION_TOKEN</code> and
-                open <Link href="/app">Studio</Link> — see README.
-              </p>
-            )}
           </div>
         </section>
 
