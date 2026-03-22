@@ -1,6 +1,6 @@
-import { tonesForPrompt } from "../lib/creatorProfile.js";
-import type { CalendarItem, CreatorProfile } from "../types.js";
-import { ollamaJsonParsed } from "../llm/ollama.js";
+import { tonesForPrompt } from "../lib/creatorProfile";
+import type { CalendarItem, CreatorProfile } from "../types";
+import { ollamaJsonParsed } from "../llm/ollama";
 
 export function postCountForWeek(postingFrequency: string): number {
   const m = postingFrequency.match(/(\d+)/);

@@ -1,7 +1,7 @@
 import type { Client } from "@notionhq/client";
-import type { CalendarItem, CreatorProfile } from "../types.js";
-import type { StudioState } from "../state.js";
-import { parseCreatorProfileBody } from "../notion/profileText.js";
+import type { CalendarItem, CreatorProfile } from "../types";
+import type { StudioState } from "../state";
+import { parseCreatorProfileBody } from "../notion/profileText";
 import {
   CREATOR_PROFILE_TITLE,
   addPipelineRowsWithLog,
@@ -15,7 +15,7 @@ import {
   queryDataSourceAll,
   createClient,
   updateCreatorProfilePage,
-} from "./notionRest.js";
+} from "./notionRest";
 
 export async function ensureHub(client: Client, state: StudioState): Promise<StudioState> {
   let hub = state.hubPageId ?? (await findHubPageId(client));

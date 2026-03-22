@@ -1,8 +1,8 @@
 /** Notion REST API (@notionhq/client) for Next.js API routes. */
 import { Client } from "@notionhq/client";
-import type { CalendarItem, CreatorProfile, PipelineRow } from "../types.js";
-import { formatCreatorProfileBody } from "../notion/profileText.js";
-import { toRichTextArray } from "../notion/richText.js";
+import type { CalendarItem, CreatorProfile, PipelineRow } from "../types";
+import { formatCreatorProfileBody } from "../notion/profileText";
+import { toRichTextArray } from "../notion/richText";
 
 const HUB_TITLE = "Notion AI Content Studio Hub";
 export const CREATOR_PROFILE_TITLE = "Creator Profile";

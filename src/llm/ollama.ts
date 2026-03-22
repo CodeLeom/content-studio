@@ -1,4 +1,4 @@
-import { extractJson } from "../notion/parse.js";
+import { extractJson } from "../notion/parse";
 
 const DEFAULT_HOST = "http://127.0.0.1:11434";
 const DEFAULT_MODEL = "llama3.1";

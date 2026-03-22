@@ -1,6 +1,6 @@
-import { tonesForPrompt } from "../lib/creatorProfile.js";
-import type { CreatorProfile } from "../types.js";
-import { ollamaJsonParsed } from "./ollama.js";
+import { tonesForPrompt } from "../lib/creatorProfile";
+import type { CreatorProfile } from "../types";
+import { ollamaJsonParsed } from "./ollama";
 
 export type ScriptInput = {
   title: string;

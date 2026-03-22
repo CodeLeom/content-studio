@@ -1,5 +1,5 @@
-import { DEFAULT_TONES } from "../lib/creatorProfile.js";
-import type { CreatorProfile } from "../types.js";
+import { DEFAULT_TONES } from "../lib/creatorProfile";
+import type { CreatorProfile } from "../types";
 
 export function formatCreatorProfileBody(p: CreatorProfile): string {
   const toneLine =

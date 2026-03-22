@@ -1,4 +1,4 @@
-import type { CreatorProfile } from "../types.js";
+import type { CreatorProfile } from "../types";
 
 export const DEFAULT_TONES = ["casual", "friendly"] as const;
 

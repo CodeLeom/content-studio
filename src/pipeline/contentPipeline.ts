@@ -1,14 +1,14 @@
 import type { Client } from "@notionhq/client";
-import type { CreatorProfile, PipelineRow } from "../types.js";
+import type { CreatorProfile, PipelineRow } from "../types";
 import {
   patchPage,
   queryDataSourceAll,
   rowPropertiesDraft,
   rowPropertiesReady,
   rowPropertiesRepurposed,
-} from "../lib/notionRest.js";
-import { generateScript } from "../llm/scriptGenerator.js";
-import { formatRepurposedForNotion, generateRepurposedContent } from "../llm/repurposer.js";
+} from "../lib/notionRest";
+import { generateScript } from "../llm/scriptGenerator";
+import { formatRepurposedForNotion, generateRepurposedContent } from "../llm/repurposer";
 
 function hasScript(row: PipelineRow): boolean {
   return Boolean(row.script && row.script.trim().length > 0);
