@@ -1,10 +1,11 @@
+import { tonesForPrompt } from "../lib/creatorProfile.js";
 import type { CalendarItem, CreatorProfile } from "../types.js";
 import { ollamaJsonParsed } from "../llm/ollama.js";
 
 export function postCountForWeek(postingFrequency: string): number {
   const m = postingFrequency.match(/(\d+)/);
   const raw = m ? parseInt(m[1], 10) : 3;
-  return Math.min(5, Math.max(3, raw));
+  return Math.min(7, Math.max(1, raw));
 }
 
 function dayOffsets(count: number): number[] {
@@ -37,7 +38,7 @@ export async function generateWeeklyCalendar(profile: CreatorProfile): Promise<C
 The array must have exactly ${n} items.
 
 Generate ${n} specific, compelling content titles for a creator in niche: "${profile.niche}".
-Style: ${profile.contentStyle}. Tone: ${profile.tone}.
+Style: ${profile.contentStyle}. Tone: ${tonesForPrompt(profile)}.
 Titles should feel actionable and on-brand. No numbering in titles.`;
   const parsed = await ollamaJsonParsed<{ titles: string[] }>(prompt);
   let titles = parsed.titles ?? [];

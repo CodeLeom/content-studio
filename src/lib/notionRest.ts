@@ -1,6 +1,7 @@
 /** Notion REST API (@notionhq/client) for Next.js API routes. */
 import { Client } from "@notionhq/client";
 import type { CalendarItem, CreatorProfile, PipelineRow } from "../types.js";
+import { formatCreatorProfileBody } from "../notion/profileText.js";
 import { toRichTextArray } from "../notion/richText.js";
 
 const HUB_TITLE = "Notion AI Content Studio Hub";
@@ -182,13 +183,7 @@ export async function createCreatorProfilePage(
   hubId: string,
   profile: CreatorProfile
 ): Promise<string> {
-  const body = [
-    "Platforms: " + profile.platforms.join(", "),
-    "Niche: " + profile.niche,
-    "Posting frequency: " + profile.postingFrequency,
-    "Content style: " + profile.contentStyle,
-    "Tone: " + profile.tone,
-  ].join("\n");
+  const body = formatCreatorProfileBody(profile);
   const res = await client.pages.create({
     parent: { page_id: hubId, type: "page_id" },
     properties: {
@@ -211,13 +206,7 @@ export async function updateCreatorProfilePage(
   pageId: string,
   profile: CreatorProfile
 ): Promise<void> {
-  const body = [
-    "Platforms: " + profile.platforms.join(", "),
-    "Niche: " + profile.niche,
-    "Posting frequency: " + profile.postingFrequency,
-    "Content style: " + profile.contentStyle,
-    "Tone: " + profile.tone,
-  ].join("\n");
+  const body = formatCreatorProfileBody(profile);
   const existing = await getBlockChildren(client, pageId);
   for (const b of existing) {
     const bid = b.id;

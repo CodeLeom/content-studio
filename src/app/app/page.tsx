@@ -5,21 +5,45 @@ import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import type { CreatorProfile } from "@/types";
 import type { StudioState } from "@/state";
+import {
+  buildPlatformsFromSelection,
+  CONTENT_STYLE_OPTIONS,
+  DEFAULT_TONES,
+  PLATFORM_OPTIONS,
+  POSTING_FREQUENCY_OPTIONS,
+  TONE_OPTIONS,
+} from "@/lib/creatorProfile";
 
 const emptyProfile = (): CreatorProfile => ({
   platforms: [],
   niche: "",
   postingFrequency: "3x/week",
   contentStyle: "educational",
-  tone: "casual",
+  tones: [],
 });
+
+function emptyPlatformChecks(): Record<string, boolean> {
+  return Object.fromEntries(PLATFORM_OPTIONS.map((o) => [o.id, false]));
+}
+
+function emptyToneChecks(): Record<string, boolean> {
+  return Object.fromEntries(TONE_OPTIONS.map((t) => [t, false]));
+}
+
+function toneChecksFromDefaults(): Record<string, boolean> {
+  const defaults = new Set<string>(DEFAULT_TONES);
+  return Object.fromEntries(TONE_OPTIONS.map((t) => [t, defaults.has(t)]));
+}
 
 function StudioContent() {
   const searchParams = useSearchParams();
   const [notionReady, setNotionReady] = useState<boolean | null>(null);
   const [state, setState] = useState<StudioState>({});
   const [profile, setProfile] = useState<CreatorProfile>(emptyProfile);
-  const [platformsText, setPlatformsText] = useState("YouTube, TikTok, X");
+  const [platformChecks, setPlatformChecks] = useState(emptyPlatformChecks);
+  const [platformOther, setPlatformOther] = useState("");
+  const [useRecommendedTones, setUseRecommendedTones] = useState(true);
+  const [toneChecks, setToneChecks] = useState(emptyToneChecks);
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -48,15 +72,38 @@ function StudioContent() {
     window.location.href = "/";
   };
 
-  const syncPlatforms = useCallback(() => {
-    setProfile((p) => ({
-      ...p,
-      platforms: platformsText
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    }));
-  }, [platformsText]);
+  const buildProfileForApi = useCallback((): CreatorProfile => {
+    const selectedIds = new Set(
+      Object.entries(platformChecks)
+        .filter(([, on]) => on)
+        .map(([id]) => id)
+    );
+    const platforms = buildPlatformsFromSelection(selectedIds, platformOther);
+    const tones = useRecommendedTones ? [] : TONE_OPTIONS.filter((t) => toneChecks[t]);
+    return {
+      ...profile,
+      platforms,
+      tones,
+    };
+  }, [profile, platformChecks, platformOther, useRecommendedTones, toneChecks]);
+
+  const togglePlatform = (id: string) => {
+    setPlatformChecks((p) => ({ ...p, [id]: !p[id] }));
+  };
+
+  const toggleTone = (tone: string) => {
+    setUseRecommendedTones(false);
+    setToneChecks((p) => ({ ...p, [tone]: !p[tone] }));
+  };
+
+  const setRecommendedTonesMode = (on: boolean) => {
+    setUseRecommendedTones(on);
+    if (on) {
+      setToneChecks(emptyToneChecks());
+    } else {
+      setToneChecks(toneChecksFromDefaults());
+    }
+  };
 
   const callApi = async (
     action: "setup" | "calendar" | "pipeline" | "run-all",
@@ -64,7 +111,12 @@ function StudioContent() {
   ) => {
     setLoading(action);
     setLastError(null);
-    syncPlatforms();
+    const built = buildProfileForApi();
+    if (!useRecommendedTones && built.tones.length === 0) {
+      setLastError("Pick at least one tone, or turn on “Use recommended tone mix”.");
+      setLoading(null);
+      return;
+    }
     try {
       const body: Record<string, unknown> = {
         action,
@@ -72,22 +124,10 @@ function StudioContent() {
         force: action === "pipeline" || action === "run-all" ? force : undefined,
       };
       if (opts?.includeProfile !== false && action !== "pipeline") {
-        body.profile = {
-          ...profile,
-          platforms: platformsText
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-        };
+        body.profile = built;
       }
       if (action === "pipeline") {
-        body.profile = {
-          ...profile,
-          platforms: platformsText
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-        };
+        body.profile = built;
       }
 
       const res = await fetch("/api/studio", {
@@ -145,39 +185,113 @@ function StudioContent() {
         </div>
       )}
 
-      <div className="card">
-        <label htmlFor="platforms">Platforms (comma-separated)</label>
-        <input
-          id="platforms"
-          value={platformsText}
-          onChange={(e) => setPlatformsText(e.target.value)}
-          onBlur={syncPlatforms}
-        />
+      <div className="card studio-profile-card">
+        <fieldset className="studio-fieldset">
+          <legend className="studio-legend">Platforms</legend>
+          <p className="studio-hint">Choose every channel where you publish (you can pick more than one).</p>
+          <div className="studio-checkbox-grid">
+            {PLATFORM_OPTIONS.map((opt) => (
+              <label key={opt.id} className="studio-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={Boolean(platformChecks[opt.id])}
+                  onChange={() => togglePlatform(opt.id)}
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+          {platformChecks.other && (
+            <div className="studio-other-row">
+              <label htmlFor="platform-other">Other platform name</label>
+              <input
+                id="platform-other"
+                value={platformOther}
+                onChange={(e) => setPlatformOther(e.target.value)}
+                placeholder="e.g. Pinterest, newsletter, podcast"
+              />
+            </div>
+          )}
+        </fieldset>
+
         <label htmlFor="niche">Niche</label>
+        <p className="studio-hint" id="niche-desc">
+          The specific topic or audience you create for (helps scripts and titles stay on-brand).
+        </p>
         <input
           id="niche"
+          aria-describedby="niche-desc"
           value={profile.niche}
           onChange={(e) => setProfile((p) => ({ ...p, niche: e.target.value }))}
+          placeholder="e.g. UX design for early-stage startups"
         />
+
         <label htmlFor="freq">Posting frequency</label>
-        <input
+        <p className="studio-hint">How many posts you aim to publish per week.</p>
+        <select
           id="freq"
+          className="studio-select"
           value={profile.postingFrequency}
           onChange={(e) => setProfile((p) => ({ ...p, postingFrequency: e.target.value }))}
-          placeholder="e.g. 3x/week"
-        />
+        >
+          {POSTING_FREQUENCY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
         <label htmlFor="style">Content style</label>
-        <input
+        <p className="studio-hint">The format or angle of your content.</p>
+        <select
           id="style"
+          className="studio-select"
           value={profile.contentStyle}
           onChange={(e) => setProfile((p) => ({ ...p, contentStyle: e.target.value }))}
-        />
-        <label htmlFor="tone">Tone</label>
-        <input
-          id="tone"
-          value={profile.tone}
-          onChange={(e) => setProfile((p) => ({ ...p, tone: e.target.value }))}
-        />
+        >
+          {CONTENT_STYLE_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+            </option>
+          ))}
+        </select>
+
+        <fieldset className="studio-fieldset studio-fieldset-tones">
+          <legend className="studio-legend">Tone</legend>
+          <p className="studio-hint">
+            Voice for scripts and repurposed posts. Use the recommended mix, or pick one or more that fit your brand.
+          </p>
+          <label className="studio-checkbox-label studio-checkbox-inline">
+            <input
+              type="checkbox"
+              checked={useRecommendedTones}
+              onChange={(e) => setRecommendedTonesMode(e.target.checked)}
+            />
+            <span>
+              Use recommended tone mix ({DEFAULT_TONES.join(" & ")}) — best default if you’re unsure
+            </span>
+          </label>
+          {!useRecommendedTones && (
+            <div className="studio-checkbox-grid studio-tone-grid">
+              {TONE_OPTIONS.map((tone) => (
+                <label key={tone} className="studio-checkbox-label">
+                  <input type="checkbox" checked={Boolean(toneChecks[tone])} onChange={() => toggleTone(tone)} />
+                  <span>{tone.charAt(0).toUpperCase() + tone.slice(1)}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          <p className="studio-preview-line">
+            <span className="studio-preview-label">Used in prompts:</span>{" "}
+            {useRecommendedTones ? (
+              <span>{DEFAULT_TONES.join(", ")} (recommended)</span>
+            ) : (
+              <span>
+                {TONE_OPTIONS.filter((t) => toneChecks[t]).join(", ") || "— pick at least one tone above"}
+              </span>
+            )}
+          </p>
+        </fieldset>
       </div>
 
       <div className="card">

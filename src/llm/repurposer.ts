@@ -1,3 +1,4 @@
+import { tonesForPrompt } from "../lib/creatorProfile.js";
 import type { CreatorProfile } from "../types.js";
 import { ollamaJsonParsed } from "./ollama.js";
 
@@ -20,7 +21,7 @@ Original script to repurpose:
 ${script}
 ---
 
-Creator tone: ${profile.tone}. Style: ${profile.contentStyle}. Niche: ${profile.niche}.
+Creator tone: ${tonesForPrompt(profile)}. Style: ${profile.contentStyle}. Niche: ${profile.niche}.
 
 Rules:
 - xPosts: exactly 3 distinct posts for X/Twitter (under 280 chars each if possible).

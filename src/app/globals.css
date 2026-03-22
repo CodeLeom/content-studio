@@ -66,7 +66,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select.studio-select {
   width: 100%;
   padding: 0.5rem 0.65rem;
   border-radius: 6px;
@@ -75,6 +76,99 @@ textarea {
   color: var(--text);
   font-size: 0.95rem;
   margin-bottom: 0.85rem;
+}
+
+select.studio-select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.studio-profile-card label:not(.studio-checkbox-label) {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.studio-profile-card > label:first-of-type,
+.studio-profile-card .studio-fieldset:first-child {
+  margin-top: 0;
+}
+
+.studio-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.studio-fieldset-tones {
+  margin-bottom: 0;
+}
+
+.studio-legend {
+  padding: 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.studio-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+
+.studio-checkbox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.studio-tone-grid {
+  margin-top: 0.65rem;
+}
+
+.studio-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.studio-checkbox-label input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.studio-checkbox-inline {
+  margin-bottom: 0.65rem;
+}
+
+.studio-other-row {
+  margin-top: 0.75rem;
+}
+
+.studio-other-row label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.studio-preview-line {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0.75rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.studio-preview-label {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 textarea {

@@ -3,7 +3,8 @@ export type CreatorProfile = {
   niche: string;
   postingFrequency: string;
   contentStyle: string;
-  tone: string;
+  /** Empty means use the recommended default tone mix when generating content. */
+  tones: string[];
 };
 
 export type CalendarItem = {

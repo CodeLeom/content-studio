@@ -1,3 +1,4 @@
+import { tonesForPrompt } from "../lib/creatorProfile.js";
 import type { CreatorProfile } from "../types.js";
 import { ollamaJsonParsed } from "./ollama.js";
 
@@ -21,7 +22,7 @@ Topic/title: ${input.title}
 Target platform: ${input.platform}
 Creator niche: ${input.profile.niche}
 Content style: ${input.profile.contentStyle}
-Tone: ${input.profile.tone}
+Tone: ${tonesForPrompt(input.profile)}
 Platforms they use: ${input.profile.platforms.join(", ")}
 
 Write a hook (1-2 sentences), a full script suitable for ${input.platform} (under ~400 words unless platform needs shorter), and 3-6 key bullet points.`;
