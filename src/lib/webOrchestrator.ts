@@ -17,14 +17,6 @@ import {
   updateCreatorProfilePage,
 } from "./notionRest.js";
 
-export function getTokenFromRequest(req: Request): string | null {
-  const env = process.env.NOTION_TOKEN?.trim();
-  if (env) return env;
-  const h = req.headers.get("authorization");
-  if (h?.toLowerCase().startsWith("bearer ")) return h.slice(7).trim();
-  return null;
-}
-
 export async function ensureHub(client: Client, state: StudioState): Promise<StudioState> {
   let hub = state.hubPageId ?? (await findHubPageId(client));
   if (!hub) hub = await createHubPage(client);

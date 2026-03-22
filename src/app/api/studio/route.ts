@@ -3,12 +3,12 @@ import type { CreatorProfile } from "@/types";
 import type { StudioState } from "@/state";
 import { generateWeeklyCalendar } from "@/pipeline/calendarGenerator";
 import { runContentPipeline } from "@/pipeline/contentPipeline";
+import { getNotionAccessToken } from "@/lib/notionSession";
 import {
   ensureContentPipeline,
   ensureCreatorProfile,
   ensureHub,
   getClientForRequest,
-  getTokenFromRequest,
   isPipelineEmpty,
   loadProfileFromNotion,
   seedCalendar,
@@ -29,10 +29,10 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function POST(req: Request) {
-  const token = getTokenFromRequest(req);
+  const token = await getNotionAccessToken();
   if (!token) {
     return jsonError(
-      "Missing Notion token. Set NOTION_TOKEN on the server or paste your integration token in the app.",
+      "Notion is not connected. Use Connect Notion on the home page, or set NOTION_TOKEN for server-only development.",
       401
     );
   }
