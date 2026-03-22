@@ -72,10 +72,12 @@ export async function POST(req: Request) {
         }
         const empty = await isPipelineEmpty(client, state.contentPipelineDataSourceId);
         if (!empty) {
-          log("Pipeline already has rows — skipped calendar generation.");
+          log(
+            "Pipeline already has rows — skipped calendar (not deleted, not appended). Clear Idea rows in Notion for a fresh batch."
+          );
           return NextResponse.json({ ok: true, state, logs });
         }
-        log("Generating 1-week calendar (LLM)…");
+        log("Generating calendar (LLM)…");
         const items = await generateWeeklyCalendar(profile);
         log(`Scheduling ${items.length} posts`);
         await seedCalendar(client, state.contentPipelineDatabaseId, items, log);
@@ -115,7 +117,7 @@ export async function POST(req: Request) {
           const items = await generateWeeklyCalendar(profile);
           await seedCalendar(client, state.contentPipelineDatabaseId, items, log);
         } else {
-          log("Calendar already has rows — skipping generation.");
+          log("Calendar skipped — pipeline already has rows (clear Idea rows to regenerate).");
         }
         await runContentPipeline(
           client,

@@ -18,6 +18,7 @@ const emptyProfile = (): CreatorProfile => ({
   platforms: [],
   niche: "",
   postingFrequency: "3x/week",
+  calendarPostCount: 7,
   contentStyle: "educational",
   tones: [],
 });
@@ -50,7 +51,7 @@ const LOADING_STATUS: Record<"setup" | "calendar" | "pipeline" | "run-all", { ti
   },
   calendar: {
     title: "Generating your calendar…",
-    detail: "Ollama is proposing titles for the week. May take 30 seconds to a few minutes.",
+    detail: "Ollama is proposing titles (one per day). Large plans take longer.",
   },
   pipeline: {
     title: "Running the content pipeline…",
@@ -268,6 +269,27 @@ function StudioContent() {
           ))}
         </select>
 
+        <label htmlFor="plan-count">Content plan size</label>
+        <p className="studio-hint" id="plan-count-desc">
+          Number of posts to create in one batch (scheduled one per day starting tomorrow). Example: 30 for a month-long
+          plan. Max 90.
+        </p>
+        <input
+          id="plan-count"
+          aria-describedby="plan-count-desc"
+          type="number"
+          min={1}
+          max={90}
+          value={profile.calendarPostCount}
+          onChange={(e) => {
+            const v = parseInt(e.target.value, 10);
+            setProfile((p) => ({
+              ...p,
+              calendarPostCount: Number.isFinite(v) ? Math.min(90, Math.max(1, v)) : p.calendarPostCount,
+            }));
+          }}
+        />
+
         <label htmlFor="style">Content style</label>
         <p className="studio-hint">The format or angle of your content.</p>
         <select
@@ -322,6 +344,11 @@ function StudioContent() {
       </div>
 
       <div className="card studio-actions-card">
+        <p className="studio-rerun-note">
+          <strong>Re-running:</strong> Calendar generation runs only when the pipeline has <strong>no rows yet</strong> — it
+          does not delete or append if ideas already exist. Clear Idea rows in Notion (or the whole table) to get a fresh
+          batch. Scripts repurpose rows still in <strong>Idea</strong> unless you use <strong>Force regenerate</strong>.
+        </p>
         <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
           Uses Ollama locally (e.g. <code>ollama pull llama3.1</code>). Default model: <code>llama3.1</code>.
         </p>

@@ -41,8 +41,8 @@ export async function runContentPipeline(
       await patchPage(client, row.pageId, rowPropertiesDraft(scriptOut.hook, scriptOut.script));
 
       onLog("Repurposing content");
-      const rep = await generateRepurposedContent(scriptOut.script, profile);
-      const blob = formatRepurposedForNotion(rep);
+      const rep = await generateRepurposedContent(scriptOut.script, profile, row.platform);
+      const blob = formatRepurposedForNotion(rep, row.platform);
       onLog("Writing repurposed outputs to Notion");
       await patchPage(client, row.pageId, rowPropertiesRepurposed(blob));
       onLog("Marking Ready");

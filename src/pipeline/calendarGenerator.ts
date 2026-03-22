@@ -8,21 +8,25 @@ export function postCountForWeek(postingFrequency: string): number {
   return Math.min(7, Math.max(1, raw));
 }
 
-function dayOffsets(count: number): number[] {
-  if (count <= 1) return [0];
-  return Array.from({ length: count }, (_, i) => Math.round((i * 6) / (count - 1)));
-}
-
-export function scheduleDatesInWeek(count: number): string[] {
+/** One scheduled post per calendar day, starting tomorrow (supports 30-day plans, etc.). */
+export function scheduleDatesForPlan(count: number): string[] {
+  const n = Math.min(90, Math.max(1, count));
   const start = new Date();
   start.setDate(start.getDate() + 1);
   start.setHours(0, 0, 0, 0);
-  const offsets = dayOffsets(count);
-  return offsets.map((off) => {
+  return Array.from({ length: n }, (_, i) => {
     const d = new Date(start);
-    d.setDate(start.getDate() + off);
+    d.setDate(start.getDate() + i);
     return d.toISOString().slice(0, 10);
   });
+}
+
+export function calendarPostCountForProfile(profile: CreatorProfile): number {
+  const c = profile.calendarPostCount;
+  if (typeof c === "number" && Number.isFinite(c) && c >= 1) {
+    return Math.min(90, Math.max(1, Math.floor(c)));
+  }
+  return postCountForWeek(profile.postingFrequency);
 }
 
 export function rotatePlatforms(platforms: string[], n: number): string[] {
@@ -31,13 +35,14 @@ export function rotatePlatforms(platforms: string[], n: number): string[] {
 }
 
 export async function generateWeeklyCalendar(profile: CreatorProfile): Promise<CalendarItem[]> {
-  const n = postCountForWeek(profile.postingFrequency);
-  const dates = scheduleDatesInWeek(n);
+  const n = calendarPostCountForProfile(profile);
+  const dates = scheduleDatesForPlan(n);
   const platforms = rotatePlatforms(profile.platforms, n);
   const prompt = `Return ONLY valid JSON: {"titles": string[]}
 The array must have exactly ${n} items.
 
 Generate ${n} specific, compelling content titles for a creator in niche: "${profile.niche}".
+Each title should match the intended platform in the batch when platforms rotate: ${profile.platforms.join(", ") || "general"}.
 Style: ${profile.contentStyle}. Tone: ${tonesForPrompt(profile)}.
 Titles should feel actionable and on-brand. No numbering in titles.`;
   const parsed = await ollamaJsonParsed<{ titles: string[] }>(prompt);
