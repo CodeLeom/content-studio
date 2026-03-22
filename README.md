@@ -1,107 +1,67 @@
 # Notion AI Content Studio
 
-A **Next.js** app that connects a **Notion** workspace to **local Llama 3.1** (via Ollama), creates a **Creator Profile** and **Content Pipeline** database, generates a **1-week calendar**, then fills in **hooks, scripts, and repurposed multi-platform outputs**—all written back to Notion with **Status** tracking.
+Plan a week of posts, generate scripts, and get repurposed copy for social—all saved in **Notion**. Drafts are produced by **Ollama** on your computer (e.g. Llama 3.1); only syncing with Notion uses the network.
 
-## Do we “get their token”?
+---
 
-**Yes, after they connect with Notion’s OAuth flow** (recommended for real users):
+## What you need
 
-- Notion redirects back with a **short-lived `code`**, which the server **exchanges** for an **`access_token`** and **`refresh_token`**.
-- Those are **not** the same as copying an internal integration secret—they’re **per authorization** and scoped to what the user shared in the page picker.
-- This app stores tokens in **httpOnly cookies** (not in `localStorage`). For production you’d typically persist them in a database keyed by user id.
+- A **Notion** account and permission to connect this app to a workspace (you’ll sign in and choose what to share).
+- **Ollama** installed and running locally, with a model pulled (the app expects **Llama 3.1** by default—run `ollama pull llama3.1` once).
 
-**Internal integration token** (`NOTION_TOKEN` in `.env.local`) still works for **local dev** or single-user server setups without OAuth.
+---
 
-## UX
+## Using the app
 
-1. **Home (`/`)** — What the app does + **Do you have a Notion account?**
-   - **Connect Notion** — starts OAuth (`/api/auth/notion`).
-   - **I need a Notion account** — opens Notion’s signup in a **new tab**; user returns and taps **Connect Notion**.
-2. **Studio (`/app`)** — Creator profile + calendar / pipeline actions (after connection or with `NOTION_TOKEN`).
+### 1. Open the app
 
-## Prerequisites
+Go to your app URL (for example `http://localhost:3000` if you’re running it yourself).
 
-- **Node.js 20+**
-- **Notion**: either a [public OAuth integration](https://developers.notion.com/docs/authorization#public-integration-auth-flow-set-up) (for Connect Notion) or an internal integration token for dev-only.
-- **Ollama** with **Llama 3.1**, e.g. `ollama pull llama3.1` (`OLLAMA_MODEL` overrides the default).
+### 2. Connect Notion
 
-## OAuth setup (Connect Notion)
+On the home page, use **Connect Notion** and complete Notion’s sign-in. Pick the workspace (and pages) you’re okay with this app using.
 
-1. In [Notion integrations](https://www.notion.so/my-integrations), create a **public** integration (or convert an existing one to public).
-2. Under **OAuth**, set the **redirect URI** to exactly:
-   - Local: `http://localhost:3000/api/auth/callback`
-   - Production: `https://your-domain.com/api/auth/callback`
-3. Copy **OAuth client ID** and **OAuth client secret** from the integration settings.
+If **Connect Notion** is disabled, whoever hosts the app must finish setup—see *If you run the app yourself* below.
 
-Add to **`.env.local`**:
+### 3. Open the studio
 
-```bash
-NOTION_OAUTH_CLIENT_ID=your_client_id
-NOTION_OAUTH_CLIENT_SECRET=your_client_secret
-NOTION_OAUTH_REDIRECT_URI=http://localhost:3000/api/auth/callback
-```
+After connecting, open **Studio** (or follow the link you’re given). You’ll see a **creator profile**:
 
-Restart `npm run dev`. The home page **Connect Notion** button will enable once `/api/health` reports `oauthConfigured`.
+- **Platforms** — check the channels you use (and add another name if needed).
+- **Niche** — what you create about (helps titles and scripts stay on-topic).
+- **Posting frequency** — how many posts per week you aim for.
+- **Content style** — the kind of content you make.
+- **Tone** — use the **recommended** mix or choose one or more tones.
 
-## Install & run
+### 4. Run the workflow
 
-```bash
-cd "/path/to/content studio"
-npm install
-npm run dev
-```
+- **Run everything — setup, calendar & pipeline** — creates or updates your Notion **hub**, **Creator Profile**, and **Content Pipeline**, adds a **one-week calendar** of ideas (if the pipeline is empty), then writes **hooks**, **scripts**, and **repurposed outputs** for each idea.
 
-Open [http://localhost:3000](http://localhost:3000) → **Connect Notion** → you’ll return to **`/app`** with a session cookie.
+Use **Individual steps** only if you need to redo one part (for example, only regenerate the calendar).
 
-## Environment
+### 5. Optional: force new scripts
 
-| Variable | When |
-|----------|------|
-| `NOTION_OAUTH_CLIENT_ID` | OAuth (Connect Notion) |
-| `NOTION_OAUTH_CLIENT_SECRET` | OAuth |
-| `NOTION_OAUTH_REDIRECT_URI` | Must match the redirect URI in Notion (e.g. `http://localhost:3000/api/auth/callback`) |
-| `NOTION_TOKEN` | Optional: internal integration secret for dev / server-only (no OAuth UI) |
-| `OLLAMA_HOST` | Optional, default `http://127.0.0.1:11434` |
-| `OLLAMA_MODEL` | Optional, default `llama3.1` |
+Turn on **Force regenerate scripts** if you want the AI to **rewrite** scripts for ideas that already have text—for example after you change your profile or you’re unhappy with the last run. Leave it off to **skip** rows that already have a script.
 
-## API
+### 6. Find everything in Notion
 
-| Route | Purpose |
-|-------|---------|
-| `GET /api/health` | `{ notionReady, oauthConfigured }` — no secrets |
-| `GET /api/auth/notion` | Redirects to Notion OAuth |
-| `GET /api/auth/callback` | Exchanges `code`, sets cookies, redirects to `/app` |
-| `POST /api/auth/logout` | Clears Notion cookies |
-| `POST /api/studio` | `{ action: setup \| calendar \| pipeline \| run-all, state?, profile?, force? }` |
+Open the **Notion AI Content Studio Hub** in your workspace. You’ll find:
 
-## Expected Notion layout
+- **Creator Profile** — your settings in one place.
+- **Content Pipeline** — a database with your posts, **Status** (Idea → Draft → Ready), **Hook**, **Script**, and **Repurposed Outputs**.
 
-Under **Notion AI Content Studio Hub**:
+---
 
-- **Creator Profile** (page) — platforms, niche, frequency, style, tone.
-- **Content Pipeline** (database) — Title, Status, Platform, Scheduled Date, Hook, Script, Repurposed Outputs.
+## If you run the app yourself
 
-## Project structure
+1. Install dependencies: `npm install`
+2. Start the dev server: `npm run dev`
+3. Configure environment variables (for example in `.env.local`): Notion OAuth credentials for **Connect Notion**, or `NOTION_TOKEN` for a single-workspace integration without OAuth. Optional: `OLLAMA_HOST`, `OLLAMA_MODEL`.
 
-```
-src/
-  app/
-    page.tsx              # Landing (what it does + Connect / setup CTA)
-    app/page.tsx          # Studio (profile + actions)
-    api/auth/notion/      # OAuth start
-    api/auth/callback/    # OAuth callback
-    api/auth/logout/
-    api/health/
-    api/studio/
-  lib/
-    notionSession.ts      # Cookie + env token resolution
-    notionRest.ts
-    webOrchestrator.ts
-  pipeline/
-  notion/
-  llm/
-```
+Restart the server after changing configuration.
 
-## Logging
+---
 
-`POST /api/studio` returns a `logs` array for each run. Row-level failures don’t stop the batch.
+## Disconnecting
+
+In the studio, use **Disconnect Notion** when you want to sign out of this app’s access (session is cleared in the browser).
