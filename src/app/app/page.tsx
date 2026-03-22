@@ -294,40 +294,51 @@ function StudioContent() {
         </fieldset>
       </div>
 
-      <div className="card">
-        <p style={{ marginTop: 0, fontSize: "0.9rem", color: "var(--muted)" }}>
+      <div className="card studio-actions-card">
+        <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
           Uses Ollama locally (e.g. <code>ollama pull llama3.1</code>). Default model: <code>llama3.1</code>.
         </p>
-        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+        <label className="studio-checkbox-row">
           <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
-          Force regenerate scripts (ignore existing script text)
+          <span>Force regenerate scripts (ignore existing script text)</span>
         </label>
-        <div className="row" style={{ marginTop: "0.75rem" }}>
-          <button type="button" disabled={!!loading || notionReady !== true} onClick={() => callApi("setup")}>
-            {loading === "setup" ? "…" : "1. Setup Notion"}
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            disabled={!!loading || notionReady !== true}
-            onClick={() => callApi("calendar")}
-          >
-            {loading === "calendar" ? "…" : "2. Generate calendar"}
-          </button>
-        </div>
-        <div className="row" style={{ marginTop: "0.5rem" }}>
-          <button
-            type="button"
-            className="secondary"
-            disabled={!!loading || notionReady !== true}
-            onClick={() => callApi("pipeline")}
-          >
-            {loading === "pipeline" ? "…" : "3. Run pipeline"}
-          </button>
-          <button type="button" disabled={!!loading || notionReady !== true} onClick={() => callApi("run-all")}>
-            {loading === "run-all" ? "…" : "Run all"}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="studio-run-primary"
+          disabled={!!loading || notionReady !== true}
+          onClick={() => callApi("run-all")}
+        >
+          {loading === "run-all" ? "…" : "Run everything — setup, calendar & pipeline"}
+        </button>
+        <details className="studio-advanced">
+          <summary>Individual steps</summary>
+          <p className="studio-advanced-hint">
+            Use these if you only need to re-run one part (e.g. regenerate the calendar without touching scripts).
+          </p>
+          <div className="row">
+            <button type="button" disabled={!!loading || notionReady !== true} onClick={() => callApi("setup")}>
+              {loading === "setup" ? "…" : "1. Setup Notion"}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={!!loading || notionReady !== true}
+              onClick={() => callApi("calendar")}
+            >
+              {loading === "calendar" ? "…" : "2. Generate calendar"}
+            </button>
+          </div>
+          <div className="row">
+            <button
+              type="button"
+              className="secondary"
+              disabled={!!loading || notionReady !== true}
+              onClick={() => callApi("pipeline")}
+            >
+              {loading === "pipeline" ? "…" : "3. Run pipeline"}
+            </button>
+          </div>
+        </details>
       </div>
 
       {lastError && <p className="error">{lastError}</p>}
