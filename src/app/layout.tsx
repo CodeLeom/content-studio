@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Notion AI Content Studio",
-  description: "1-week content calendar + scripts in your Notion workspace",
+  description: "Weekly content calendar, scripts, and repurposed posts — saved to your Notion workspace.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

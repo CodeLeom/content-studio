@@ -1,4 +1,4 @@
-# Notion AI Content Studio (Hackathon MVP)
+# Notion AI Content Studio
 
 A **Next.js** app that connects a **Notion** workspace to **local Llama 3.1** (via Ollama), creates a **Creator Profile** and **Content Pipeline** database, generates a **1-week calendar**, then fills in **hooks, scripts, and repurposed multi-platform outputs**—all written back to Notion with **Status** tracking.
 

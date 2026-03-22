@@ -237,7 +237,7 @@ function StudioContent() {
 
 export default function StudioPage() {
   return (
-    <Suspense fallback={<main className="landing-main"><p className="lead">Loading…</p></main>}>
+    <Suspense fallback={<main className="studio-loading"><p className="lead">Loading…</p></main>}>
       <StudioContent />
     </Suspense>
   );
