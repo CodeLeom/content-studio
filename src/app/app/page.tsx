@@ -51,7 +51,7 @@ const LOADING_STATUS: Record<"setup" | "calendar" | "pipeline" | "run-all", { ti
   },
   calendar: {
     title: "Generating your calendar…",
-    detail: "Ollama is proposing titles (one per day). Large plans take longer.",
+    detail: "Ollama is proposing titles to append to your table (one per day). Large plans take longer.",
   },
   pipeline: {
     title: "Running the content pipeline…",
@@ -188,6 +188,17 @@ function StudioContent() {
         <Link href="/">← Home</Link>
         <button type="button" className="linkish" onClick={() => void logout()}>
           Disconnect Notion
+        </button>
+        <button
+          type="button"
+          className="linkish"
+          title="Use after deleting the hub or pipeline in Notion"
+          onClick={() => {
+            setState({});
+            setToast("Cleared saved Notion IDs in this browser. Run Setup to connect a fresh hub.");
+          }}
+        >
+          Clear saved Notion IDs
         </button>
       </nav>
 
@@ -345,9 +356,12 @@ function StudioContent() {
 
       <div className="card studio-actions-card">
         <p className="studio-rerun-note">
-          <strong>Re-running:</strong> Calendar generation runs only when the pipeline has <strong>no rows yet</strong> — it
-          does not delete or append if ideas already exist. Clear Idea rows in Notion (or the whole table) to get a fresh
-          batch. Scripts repurpose rows still in <strong>Idea</strong> unless you use <strong>Force regenerate</strong>.
+          <strong>Calendar:</strong> <strong>Generate calendar</strong> (under Individual steps){" "}
+          <strong>appends</strong> new idea rows; scheduled dates continue after your latest day in the table.{" "}
+          <strong>Run everything</strong> only fills the calendar when the table is empty, then runs scripts — use Generate
+          calendar when you want more ideas without re-running the whole flow. Scripts update rows in <strong>Idea</strong>{" "}
+          unless you use <strong>Force regenerate</strong>. If you deleted pages in Notion and see an error, use{" "}
+          <strong>Clear saved Notion IDs</strong> above, then run Setup again.
         </p>
         <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
           Uses Ollama locally (e.g. <code>ollama pull llama3.1</code>). Default model: <code>llama3.1</code>.
@@ -386,7 +400,8 @@ function StudioContent() {
         <details className="studio-advanced">
           <summary>Individual steps</summary>
           <p className="studio-advanced-hint">
-            Use these if you only need to re-run one part (e.g. regenerate the calendar without touching scripts).
+            Use <strong>Generate calendar</strong> to add another batch of ideas (appended to the table). Use{" "}
+            <strong>Run pipeline</strong> to write hooks and scripts only.
           </p>
           <div className="row">
             <button

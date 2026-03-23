@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import type { CreatorProfile } from "@/types";
 import type { StudioState } from "@/state";
-import { generateWeeklyCalendar } from "@/pipeline/calendarGenerator";
+import { generateWeeklyCalendar, maxScheduledDateIso } from "@/pipeline/calendarGenerator";
 import { runContentPipeline } from "@/pipeline/contentPipeline";
 import { getNotionAccessToken } from "@/lib/notionSession";
+import { queryDataSourceAll } from "@/lib/notionRest";
+import { sanitizeStudioState } from "@/lib/notionStateSanitize";
 import {
   ensureContentPipeline,
   ensureCreatorProfile,
@@ -22,6 +24,8 @@ type Body = {
   state?: StudioState;
   profile?: CreatorProfile;
   force?: boolean;
+  /** Clear client-sent IDs before sanitizing (after you deleted the hub in Notion). */
+  reset?: boolean;
 };
 
 function jsonError(message: string, status = 400) {
@@ -48,9 +52,14 @@ export async function POST(req: Request) {
   const logs: string[] = [];
   const log = (m: string) => logs.push(m);
 
-  let state: StudioState = body.state ?? {};
+  let state: StudioState = body.reset ? {} : (body.state ?? {});
 
   try {
+    if (body.reset) {
+      log("Cleared saved Notion IDs from the request.");
+    }
+    state = await sanitizeStudioState(client, state, log);
+
     switch (body.action) {
       case "setup": {
         if (!body.profile) return jsonError("profile is required for setup");
@@ -70,16 +79,15 @@ export async function POST(req: Request) {
         if (!state.contentPipelineDatabaseId || !state.contentPipelineDataSourceId) {
           return jsonError("Content Pipeline not configured");
         }
-        const empty = await isPipelineEmpty(client, state.contentPipelineDataSourceId);
-        if (!empty) {
-          log(
-            "Pipeline already has rows — skipped calendar (not deleted, not appended). Clear Idea rows in Notion for a fresh batch."
-          );
-          return NextResponse.json({ ok: true, state, logs });
-        }
+        const rows = await queryDataSourceAll(client, state.contentPipelineDataSourceId);
+        const lastDay = maxScheduledDateIso(rows);
         log("Generating calendar (LLM)…");
-        const items = await generateWeeklyCalendar(profile);
-        log(`Scheduling ${items.length} posts`);
+        const items = await generateWeeklyCalendar(profile, { lastScheduledDayIso: lastDay });
+        log(
+          lastDay
+            ? `Appending ${items.length} new ideas (dates continue after ${lastDay}).`
+            : `Adding ${items.length} new ideas (one per day from tomorrow).`
+        );
         await seedCalendar(client, state.contentPipelineDatabaseId, items, log);
         log("Calendar written (Status = Idea).");
         return NextResponse.json({ ok: true, state, logs });
@@ -117,7 +125,9 @@ export async function POST(req: Request) {
           const items = await generateWeeklyCalendar(profile);
           await seedCalendar(client, state.contentPipelineDatabaseId, items, log);
         } else {
-          log("Calendar skipped — pipeline already has rows (clear Idea rows to regenerate).");
+          log(
+            "Calendar skipped — pipeline already has rows (use “Generate calendar” alone to append more ideas)."
+          );
         }
         await runContentPipeline(
           client,
@@ -133,7 +143,11 @@ export async function POST(req: Request) {
         return jsonError("Unknown action");
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
+    let msg = e instanceof Error ? e.message : String(e);
+    if (/archived ancestor/i.test(msg)) {
+      msg +=
+        " Unarchive the parent page in Notion, or set NOTION_PARENT_PAGE_ID to a live page shared with the integration. Then use “Clear saved Notion IDs” in the app and run Setup again.";
+    }
     logs.push(`ERROR: ${msg}`);
     return NextResponse.json({ ok: false, state, logs, error: msg }, { status: 500 });
   }

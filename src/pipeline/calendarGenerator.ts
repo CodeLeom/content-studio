@@ -8,11 +8,40 @@ export function postCountForWeek(postingFrequency: string): number {
   return Math.min(7, Math.max(1, raw));
 }
 
-/** One scheduled post per calendar day, starting tomorrow (supports 30-day plans, etc.). */
-export function scheduleDatesForPlan(count: number): string[] {
+/**
+ * Latest scheduled date in the pipeline (YYYY-MM-DD). Used when appending new ideas
+ * so dates continue after existing rows.
+ */
+export function maxScheduledDateIso(rows: Array<{ scheduledDate?: string }>): string | undefined {
+  let max = "";
+  for (const r of rows) {
+    const d = r.scheduledDate?.trim();
+    if (!d) continue;
+    if (!max || d > max) max = d;
+  }
+  return max || undefined;
+}
+
+/**
+ * One scheduled post per calendar day. Without `lastScheduledDayIso`, starts tomorrow.
+ * With `lastScheduledDayIso`, the first new day is the day after that (append batch).
+ */
+export function scheduleDatesForPlan(count: number, lastScheduledDayIso?: string): string[] {
   const n = Math.min(90, Math.max(1, count));
-  const start = new Date();
-  start.setDate(start.getDate() + 1);
+  let start: Date;
+  if (lastScheduledDayIso) {
+    const parsed = new Date(lastScheduledDayIso.trim() + "T12:00:00");
+    if (Number.isNaN(parsed.getTime())) {
+      start = new Date();
+      start.setDate(start.getDate() + 1);
+    } else {
+      start = new Date(parsed);
+      start.setDate(start.getDate() + 1);
+    }
+  } else {
+    start = new Date();
+    start.setDate(start.getDate() + 1);
+  }
   start.setHours(0, 0, 0, 0);
   return Array.from({ length: n }, (_, i) => {
     const d = new Date(start);
@@ -34,9 +63,12 @@ export function rotatePlatforms(platforms: string[], n: number): string[] {
   return Array.from({ length: n }, (_, i) => p[i % p.length]);
 }
 
-export async function generateWeeklyCalendar(profile: CreatorProfile): Promise<CalendarItem[]> {
+export async function generateWeeklyCalendar(
+  profile: CreatorProfile,
+  opts?: { lastScheduledDayIso?: string }
+): Promise<CalendarItem[]> {
   const n = calendarPostCountForProfile(profile);
-  const dates = scheduleDatesForPlan(n);
+  const dates = scheduleDatesForPlan(n, opts?.lastScheduledDayIso);
   const platforms = rotatePlatforms(profile.platforms, n);
   const prompt = `Return ONLY valid JSON: {"titles": string[]}
 The array must have exactly ${n} items.
